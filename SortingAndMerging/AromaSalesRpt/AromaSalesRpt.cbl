@@ -26,12 +26,13 @@
        FILE SECTION.
        FD Sales-File.
        01  Sales-Rec.
-           88 End-Of-Sales-File        VALUE HIGH-VALUES.
+           88  End-Of-Sales-File        VALUE HIGH-VALUES.
            02  SF-Cust-Id              PIC X(5).
            02  SF-Cust-Name            PIC X(20).
            02  SF-Oil-Id.
                03  FILLER              PIC X.
                    88 Essential-Oil    VALUE "E".
+                   88 Base-Oil         VALUE "B".
                03  SF-Oil-Name         PIC 99.
            02 SF-Unit-Size             PIC 99.
            02 SF-Units-Sold            PIC 999.
@@ -112,7 +113,32 @@
            02  Prev-Cust-Id            PIC X(5).
 
        PROCEDURE DIVISION.
-       MAIN-PROCEDURE.
-            DISPLAY "Hello world"
-            STOP RUN.
+       ProduceSummaryReport.
+           SORT Work-File ON ASCENDING WF-Cust-Name
+               INPUT PROCEDURE IS SortOils
+               OUTPUT PROCEDURE IS PrintSalesReport.
+           STOP RUN.
+       SortOils.
+           OPEN INPUT Sales-File.
+           READ Sales-File
+               AT END SET End-Of-Sales-File TO TRUE
+           END-READ.
+
+           PERFORM UNTIL End-Of-Sales-File
+               IF Essential-Oil
+                   RELEASE Work-Rec FROM Sales-Rec
+                   ELSE IF Base-Oil
+                       RELEASE Work-Rec FROM Sales-Rec
+               END-IF
+               READ Sales-File
+                   AT END SET End-Of-Sales-File TO TRUE
+               END-READ
+           END-PERFORM.
+
+           CLOSE Sales-File.
+
+       PrintSalesReport.
+           OPEN OUTPUT Summary-Report.
+           OPEN OUTPUT Sorted-File.
+
        END PROGRAM AromaSalesRpt.
